@@ -1,16 +1,53 @@
-
-
-
 jQuery(document).ready(function () {
 
-    var map = L.mapbox.map('map', 'jdungan.g8c274d0', {zoomControl: false}).setView([39, -96], 5),
+    var map = L.mapbox.map('map', 'jdungan.g8c274d0', {zoomControl: false}).setView([36, -96], 7),
     svg = d3.select(map.getPanes().overlayPane).append("svg"),
     g = svg.append("g").attr("class", "leaflet-zoom-hide"),
     legend,
     counties, 
     legend_element;
-    
 
+    HealthX = new healthdata()
+    
+    var LegendControl = L.Control.extend({
+        options: {
+            position: 'topleft'
+        },
+        onAdd: function (map) {
+            // create the control container with a particular class name
+            legend_element= L.DomUtil.create('div', 'datatsets');
+            return legend_element;
+        },
+    });
+
+    map.addControl(new LegendControl());
+
+    var datasets;
+    
+    HealthX.datasets().done(function (data) {
+
+      d3.select(legend_element).selectAll('h3')
+        .data(data)
+        .enter()
+        .append('h3')
+        .text(function (d) {
+          return d.name;})
+        .append('select')
+          .selectAll('option')
+            .data(function (d) {
+              return d.fields||[];
+            })          
+            .enter()
+            .append('option')
+            .attr('value',function (d) {
+              return d
+            })
+            .text(function (d) {
+              return d
+            })
+
+    });
+    
 
 
     function draw_counties(url,callback) {
@@ -25,7 +62,7 @@ jQuery(document).ready(function () {
             var transform = d3.geo.transform({
                 point: projectPoint
             });
-
+            
             var path = d3.geo.path().projection(transform)
 
             bounds = path.bounds(collection);
@@ -56,11 +93,7 @@ jQuery(document).ready(function () {
         });
     };
 
-
-     
     queue()
         .defer(draw_counties,'/data/counties.json')
-        .await();
     
 });// end document ready
-

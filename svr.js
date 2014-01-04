@@ -8,16 +8,28 @@ var express = require("express"),
 
 //LOAD THE DATA
 
-var health_data={};
+var health_data={},
+    datasets=[{name:'2013 County Health Ranking Oklahoma Data - v1_0'}];
+
 
 //FIPS,Population,Deaths,% Fair/Poor,% LBW,% Smokers,% Obese,"STD Rates per 100,000",Teen Birth Rate,Mammography Rate,% Unemployed,% Children in Poverty,Violent Crime Rate,Ozone Days,% Limited Access Food,% Fast Foods
 
 var build_data = function(input_file){
+  
+  var this_set = {};
+  this_set.name = input_file
+  
   fs.readFile(input_file, 'utf8', function (err, data) {
     
     health_data = d3.csv.parse(data);
-            
+    
+    this_set.fields = _.keys(health_data[0]);
+    
+    datasets.push(this_set);
+  
   });   
+
+
 };
 
 var run_server = function(){
@@ -33,6 +45,13 @@ var run_server = function(){
     next();
   });
 
+  app.get('/json/datasets', function(request, response) {
+                    
+    response.json(datasets)
+
+  });
+
+
   app.get('/json', function(request, response) {
 
     var key = request.query.key || 'FIPS'
@@ -40,9 +59,10 @@ var run_server = function(){
     var reponse_data = d3.nest()
         .key(function(d) { return d[key]; }) 
         .entries(health_data);  
-          
-          
-      response.json(reponse_data)
+                    
+    response.json(_.sortBy(reponse_data,function (obj) {
+      return +obj.key;
+    }))
 
   });
 
@@ -57,8 +77,7 @@ var run_server = function(){
 
   app.listen(port, function() {
     console.log("Listening on " + port);
-  });
-  
+  }); 
   
 }
 
