@@ -1,55 +1,17 @@
 jQuery(document).ready(function () {
 
-    var map = L.mapbox.map('map', 'jdungan.g8c274d0', {zoomControl: false}).setView([36, -96], 7),
+
+  //https://a.tiles.mapbox.com/v3/jdungan.gnm8110k/page.html?secure=1#8/35.929/-97.130
+  
+    var map = L.mapbox.map('map', 'jdungan.gnm8110k', {zoomControl: false}).setView([35.929, -97.130], 7),
     svg = d3.select(map.getPanes().overlayPane).append("svg"),
     g = svg.append("g").attr("class", "leaflet-zoom-hide"),
     legend,
     counties, 
     legend_element;
 
-    HealthX = new healthdata()
+    SGH = new healthdata()
     
-    var LegendControl = L.Control.extend({
-        options: {
-            position: 'topleft'
-        },
-        onAdd: function (map) {
-            // create the control container with a particular class name
-            legend_element= L.DomUtil.create('div', 'datatsets');
-            return legend_element;
-        },
-    });
-
-    map.addControl(new LegendControl());
-
-    var datasets;
-    
-    HealthX.datasets().done(function (data) {
-
-      d3.select(legend_element).selectAll('h3')
-        .data(data)
-        .enter()
-        .append('h3')
-        .text(function (d) {
-          return d.name;})
-        .append('select')
-          .selectAll('option')
-            .data(function (d) {
-              return d.fields||[];
-            })          
-            .enter()
-            .append('option')
-            .attr('value',function (d) {
-              return d
-            })
-            .text(function (d) {
-              return d
-            })
-
-    });
-    
-
-
     function draw_counties(url,callback) {
         d3.json(url, function(collection) {
 
@@ -92,6 +54,62 @@ jQuery(document).ready(function () {
             callback()
         });
     };
+    
+    
+    function changeField() {
+      var fName = this.options[this.selectedIndex].value;
+      SGH.json({key:fName}).done(function (data) {
+        var quantize = d3.scale.quantize()
+          .domain([+data[0].key,+data[data.length-1].key])
+          .range(d3.range(9).map(function(i) { return "q" + i ; }));        
+
+        _.each(data,function (obj) {
+          
+          _.each(obj.values,function (county_data) {
+            key_value = +county_data[fName];
+            d3.select('#F'+county_data.FIPS)
+              .attr("class", function(d) { 
+                return 'county '+ quantize( key_value); })
+            
+          })
+        })
+      });
+    };
+    
+    var LegendControl = L.Control.extend({
+        options: {
+            position: 'topleft'
+        },
+        onAdd: function (map) {
+            // create the control container with a particular class name
+            legend_element= L.DomUtil.create('div', 'datatsets');
+            return legend_element;
+        },
+    });
+
+    map.addControl(new LegendControl());
+
+    var datasets;
+    
+    // get the list of datasets and build the control
+    SGH.datasets().done(function (data) {
+
+      d3.select(legend_element).selectAll('h3')
+        .data(data)
+        .enter()
+        .append('h3')
+        .text(function (d) {
+          return d.name;})
+        .append('select')
+          .on('change',changeField)
+          .selectAll('option')
+            .data(function (d) {return d.fields||[];})          
+            .enter()
+            .append('option')
+            .attr('value',function (d) {return d})
+            .text(function (d) {return d})
+
+    });
 
     queue()
         .defer(draw_counties,'/data/counties.json')
