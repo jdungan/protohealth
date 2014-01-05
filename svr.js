@@ -9,7 +9,7 @@ var express = require("express"),
 //LOAD THE DATA
 
 var health_data={},
-    datasets=[{name:'2013 County Health Ranking Oklahoma Data - v1_0'}];
+    datasets=[];
 
 
 //FIPS,Population,Deaths,% Fair/Poor,% LBW,% Smokers,% Obese,"STD Rates per 100,000",Teen Birth Rate,Mammography Rate,% Unemployed,% Children in Poverty,Violent Crime Rate,Ozone Days,% Limited Access Food,% Fast Foods
@@ -84,7 +84,7 @@ var run_server = function(){
 
 async.chain()
   .first(
-    build_data('static/data/Protohealth.csv')
+    build_data('static/data/2013 County Health Ranking Oklahoma Data - v1_0.csv')
   )
   .then(
     run_server()

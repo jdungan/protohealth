@@ -56,62 +56,110 @@ jQuery(document).ready(function () {
     };
     
     
-    function changeField() {
-      var fName = this.options[this.selectedIndex].value;
-      SGH.json({key:fName}).done(function (data) {
-        var quantize = d3.scale.quantize()
-          .domain([+data[0].key,+data[data.length-1].key])
-          .range(d3.range(9).map(function(i) { return "q" + i ; }));        
+  var quantize = d3.scale.quantize()
+    .domain([0,100])
+    .range(d3.range(9).map(function(i) { return "q" + i ; }));        
+    
+    // .range(['#ffffcc', '#c7e9b4', '#7fcdbb', '#41b6c4', '#1d91c0', '#225ea8', '#0c2c84', '#ffffcc', '#c7e9b4'])
 
-        _.each(data,function (obj) {
+  // add legend
+  var LegendControl = L.Control.extend({
+      options: {
+          position: 'topleft'
+      },
+      onAdd: function (map) {
+          // create the control container with a particular class name
+          legend= L.DomUtil.create('div', 'legend');
+          return legend;
+      },
+  });
+
+  map.addControl(new LegendControl());
+
+ 
+//build axis
+  function LegendAxis(key_domain){
+    return;
+    if (!LegendAxis.l) {
+      
+      LegendAxis.l =     d3.select(legend).append('svg')
+      .attr('width',function () {return 500})
+      .attr('height',function () {return 50})
+      .append("g")
+          .attr("class", "key")
+          .attr("transform", "translate(20,20)");
+      
+      l.call(xAxis)
+    
+    }
+    
+    var x = d3.scale.linear()
+        .domain(key_domain)
+        .range([0,200]);
+
+    var xAxis = d3.svg.axis()
+        .scale(x)
+        .orient("bottom")
+        .ticks(5)
+        .tickSize(10)
+
+
+    // l.selectAll("rect")
+    //     .data(quantize.range().map(function(color) {
+    //       var d = quantize.invertExtent(color);
+    //       if (d[0] == null) d[0] = x.domain()[0];
+    //       if (d[1] == null) d[1] = x.domain()[1];
+    //       return d;
+    //     }))
+    //   .enter().append("rect")
+    //     .attr("height", 20)
+    //     .attr("x", function(d) { 
+    //       return x(d[0]); })
+    //     .attr("width", function(d) { return x(d[1]) - x(d[0]); })
+    //     .style("fill", function(d) { return quantize(d[0]); });
+  }
+  
+  function changeField() {
+    var fName = this.options[this.selectedIndex].value;
+    SGH.json({key:fName}).done(function (data) {
+      quantize.domain([+data[0].key,+data[data.length-1].key]);
+      LegendAxis(_.map(data,function(obj){ return +obj.key; }))
+        
+      _.each(data,function (obj) {
+        _.each(obj.values,function (county_data) {
+          key_value = +county_data[fName];
+          d3.select('#F'+county_data.FIPS)
+            .attr("class", function(d) { 
+              return 'county '+ quantize( key_value); })
           
-          _.each(obj.values,function (county_data) {
-            key_value = +county_data[fName];
-            d3.select('#F'+county_data.FIPS)
-              .attr("class", function(d) { 
-                return 'county '+ quantize( key_value); })
-            
-          })
         })
-      });
-    };
-    
-    var LegendControl = L.Control.extend({
-        options: {
-            position: 'topleft'
-        },
-        onAdd: function (map) {
-            // create the control container with a particular class name
-            legend_element= L.DomUtil.create('div', 'datatsets');
-            return legend_element;
-        },
+      })
     });
+  };
+  
 
-    map.addControl(new LegendControl());
+  var datasets;
+  
+  // get the list of datasets and build the control
+  SGH.datasets().done(function (data) {
 
-    var datasets;
-    
-    // get the list of datasets and build the control
-    SGH.datasets().done(function (data) {
+    d3.select(legend).selectAll('h3')
+      .data(data)
+      .enter()
+      .append('h3')
+      .text(function (d) {return d.name;})
+      .append('select')
+        .on('change',changeField)
+        .selectAll('option')
+          .data(function (d) {return d.fields||[];})          
+          .enter()
+          .append('option')
+          .attr('value',function (d) {return d})
+          .text(function (d) {return d})
 
-      d3.select(legend_element).selectAll('h3')
-        .data(data)
-        .enter()
-        .append('h3')
-        .text(function (d) {
-          return d.name;})
-        .append('select')
-          .on('change',changeField)
-          .selectAll('option')
-            .data(function (d) {return d.fields||[];})          
-            .enter()
-            .append('option')
-            .attr('value',function (d) {return d})
-            .text(function (d) {return d})
+  });
 
-    });
-
-    queue()
-        .defer(draw_counties,'/data/counties.json')
+  queue()
+      .defer(draw_counties,'/data/counties.json')
     
 });// end document ready

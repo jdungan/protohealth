@@ -1,0 +1,44 @@
+div#datasets{
+  background:white;
+  opacity:0.7;  
+}
+
+
+path.county {
+    fill:white;
+    fill-opacity:0.5;
+    stroke:black;
+    stroke-opacity:.25
+}
+/* thanks to http://colorbrewer2.org */
+path.q0 { fill:#ffffcc; }
+path.q1 { fill:#c7e9b4; }
+path.q2 { fill:#7fcdbb; }
+path.q3 { fill:#41b6c4; }
+path.q4 { fill:#1d91c0; }
+path.q5 { fill:#225ea8; }
+path.q6 { fill:#0c2c84; }
+path.q7 { fill:#ffffcc; }
+path.q8 { fill:#c7e9b4; }
+
+
+
+.axis text {
+  font: 12px sans-serif;
+  fill:black;
+}
+
+.axis path, .axis line {
+  fill: none;
+  stroke: black;
+  shape-rendering: crispEdges;
+}
+
+.key path {
+  display: none;
+}
+
+.key line {
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
