@@ -2,7 +2,7 @@
 var healthdata = (function (){
   var options = {
     endpoint: '/json',
-    domain: 'localhost:1984'
+    domain: document.domain.match(/localhost/i).length>0 && 'localhost:1984' || document.domain
   };
 
   //generic call

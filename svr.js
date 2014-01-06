@@ -21,11 +21,11 @@ var build_data = function(input_file){
   
   fs.readFile(input_file, 'utf8', function (err, data) {
     
-    health_data = d3.csv.parse(data);
-    
-    this_set.fields = _.keys(health_data[0]);
-    
-    datasets.push(this_set);
+  health_data = d3.csv.parse(data);
+  
+  this_set.fields = _.keys(health_data[0]);
+  
+  datasets.push(this_set);
   
   });   
 
