@@ -58,9 +58,8 @@ jQuery(document).ready(function () {
     
   var quantize = d3.scale.quantize()
     .domain([0,100])
-    .range(d3.range(9).map(function(i) { return "q" + i ; }));        
-    
-    // .range(['#ffffcc', '#c7e9b4', '#7fcdbb', '#41b6c4', '#1d91c0', '#225ea8', '#0c2c84', '#ffffcc', '#c7e9b4'])
+    .range(d3.range(9).map(function(i) { return "q" + i ; }));
+    // colors=.range(['#ffffcc', '#c7e9b4', '#7fcdbb', '#41b6c4', '#1d91c0', '#225ea8', '#0c2c84', '#ffffcc', '#c7e9b4'])
 
   // add legend
   var LegendControl = L.Control.extend({
@@ -78,57 +77,60 @@ jQuery(document).ready(function () {
 
  
 //build axis
-  function LegendAxis(key_domain){
-    return;
-    if (!LegendAxis.l) {
-      
-      LegendAxis.l =     d3.select(legend).append('svg')
-      .attr('width',function () {return 500})
-      .attr('height',function () {return 50})
-      .append("g")
-          .attr("class", "key")
-          .attr("transform", "translate(20,20)");
-      
-      l.call(xAxis)
-    
-    }
-    
-    var x = d3.scale.linear()
-        .domain(key_domain)
-        .range([0,200]);
+  function buildLegend(data){
+    var thisf = buildLegend;
+            
+    var x = thisf.x = thisf.x || d3.scale.linear()
+        .range([0,300]);
 
-    var xAxis = d3.svg.axis()
-        .scale(x)
+    var xAxis = thisf.xAxis = thisf.xAxis || d3.svg.axis()
         .orient("bottom")
-        .ticks(5)
-        .tickSize(10)
+        .tickSize(30)
+        .tickFormat(d3.format('s'))
+
+    var l = thisf.l  = thisf.l || d3.select(legend).append('svg')
+        .attr('width',function () {return 500})
+        .attr('height',function () {return 50})
+        .append("g")
+            .attr("class", "key")
+            .attr("transform", "translate(10,5)");
+    
+    x
+      .domain(quantize.domain())
+      .ticks(quantize.range().length)
+    
+    xAxis.scale(x)
+    l.call(xAxis)
+            
+    colors  = l.selectAll("rect")
+      .data(function () {return quantize.range(); })
+          
+    colors.exit().remove();
+    
+    colors.enter().append("rect")
+    
+    color_width = x.range()[1]/quantize.range().length
+    
+    colors
+      .attr("height", 20)
+      .attr("x", function(d,i) { return i*color_width; })
+      .attr('width',function (d,i) {return color_width})
+      .attr('y',function () {return 0})
+      .attr("class", function(d,i) { return 'q'+i; })
 
 
-    // l.selectAll("rect")
-    //     .data(quantize.range().map(function(color) {
-    //       var d = quantize.invertExtent(color);
-    //       if (d[0] == null) d[0] = x.domain()[0];
-    //       if (d[1] == null) d[1] = x.domain()[1];
-    //       return d;
-    //     }))
-    //   .enter().append("rect")
-    //     .attr("height", 20)
-    //     .attr("x", function(d) { 
-    //       return x(d[0]); })
-    //     .attr("width", function(d) { return x(d[1]) - x(d[0]); })
-    //     .style("fill", function(d) { return quantize(d[0]); });
   }
   
   function changeField() {
     var fName = this.options[this.selectedIndex].value;
     SGH.json({key:fName}).done(function (data) {
-      quantize.domain([+data[0].key,+data[data.length-1].key]);
-      LegendAxis(_.map(data,function(obj){ return +obj.key; }))
+      quantize.domain(d3.extent(data,function(obj){ return +obj.key; }));
+      buildLegend(data)
         
       _.each(data,function (obj) {
-        _.each(obj.values,function (county_data) {
-          key_value = +county_data[fName];
-          d3.select('#F'+county_data.FIPS)
+        _.each(obj.values,function (county) {
+          key_value = +county[fName];
+          d3.select('#F'+county.FIPS)
             .attr("class", function(d) { 
               return 'county '+ quantize( key_value); })
           
@@ -138,8 +140,6 @@ jQuery(document).ready(function () {
   };
   
 
-  var datasets;
-  
   // get the list of datasets and build the control
   SGH.datasets().done(function (data) {
 
@@ -156,8 +156,9 @@ jQuery(document).ready(function () {
           .append('option')
           .attr('value',function (d) {return d})
           .text(function (d) {return d})
-
+  
   });
+  
 
   queue()
       .defer(draw_counties,'/data/counties.json')
