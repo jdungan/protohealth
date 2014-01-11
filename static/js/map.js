@@ -72,8 +72,9 @@ jQuery(document).ready(function () {
           return legend;
       },
   });
-
+  
   map.addControl(new LegendControl());
+
 
  
 //build axis
@@ -90,10 +91,10 @@ jQuery(document).ready(function () {
 
     var l = thisf.l  = thisf.l || d3.select(legend).append('svg')
         .attr('width',function () {return 500})
-        .attr('height',function () {return 50})
+        .attr('height',function () {return 100})
         .append("g")
             .attr("class", "key")
-            .attr("transform", "translate(10,5)");
+            .attr("transform", "translate(50,50)");
     
     x
       .domain(quantize.domain())
@@ -143,13 +144,12 @@ jQuery(document).ready(function () {
   // get the list of datasets and build the control
   SGH.datasets().done(function (data) {
 
-    d3.select(legend).selectAll('h3')
+    d3.select('#legend_form').selectAll('h3')
       .data(data)
       .enter()
       .append('h3')
         .text(function (d) {return d.name;})
-      .append('form')
-      .insert('select')
+      .append('select')
         .on('change',changeField)
         .selectAll('option')
           .data(function (d) {return d.fields||[];})          
