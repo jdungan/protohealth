@@ -147,15 +147,16 @@ jQuery(document).ready(function () {
       .data(data)
       .enter()
       .append('h3')
-      .text(function (d) {return d.name;})
-      .append('select')
+        .text(function (d) {return d.name;})
+      .append('form')
+      .insert('select')
         .on('change',changeField)
         .selectAll('option')
           .data(function (d) {return d.fields||[];})          
           .enter()
           .append('option')
-          .attr('value',function (d) {return d})
-          .text(function (d) {return d})
+            .attr('value',function (d) {return d})
+            .text(function (d) {return d})
   
   });
   
