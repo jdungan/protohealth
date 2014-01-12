@@ -44,6 +44,7 @@ jQuery(document).ready(function () {
 
             counties = g.selectAll("path")
                 .data(collection.features)
+                .on('mouseover',show_county_details)
                 .enter()
                 .append("path")
                 .attr('class', 'county')
@@ -64,7 +65,7 @@ jQuery(document).ready(function () {
   // add legend
   var LegendControl = L.Control.extend({
       options: {
-          position: 'topleft'
+          position: 'bottomright'
       },
       onAdd: function (map) {
           // create the control container with a particular class name
@@ -75,8 +76,32 @@ jQuery(document).ready(function () {
   
   map.addControl(new LegendControl());
 
+  // add county
+  var countyControl = L.Control.extend({
+      options: {
+          position: 'bottomleft'
+      },
+      onAdd: function (map) {
+          // create the control container with a particular class name
+          county_detail= L.DomUtil.create('div', 'county_detail');
+          return county_detail;
+      },
+  });
+  
+  map.addControl(new countyControl());
 
  
+ 
+  function show_county_details(){
+    
+    details = d3.select('#county_details')
+    details.text('')
+    details
+      .text(this.datum())
+    
+  };
+  
+  
 //build axis
   function buildLegend(data){
     var thisf = buildLegend;
@@ -90,11 +115,11 @@ jQuery(document).ready(function () {
         .tickFormat(d3.format('s'))
 
     var l = thisf.l  = thisf.l || d3.select(legend).append('svg')
-        .attr('width',function () {return 500})
-        .attr('height',function () {return 100})
+        .attr('width',function () {return 400})
+        .attr('height',function () {return 50})
         .append("g")
             .attr("class", "key")
-            .attr("transform", "translate(50,50)");
+            .attr("transform", "translate(50,5)");
     
     x
       .domain(quantize.domain())
@@ -123,8 +148,11 @@ jQuery(document).ready(function () {
   }
   
   function changeField() {
-    var fName = this.options[this.selectedIndex].value;
-    SGH.json({key:fName}).done(function (data) {
+    var fName = this.options[this.selectedIndex].value,
+        dsName = d3.select(this.parentNode).datum().name;
+    
+    SGH.json({key:fName,name:dsName}).done(function (data) {
+      
       quantize.domain(d3.extent(data,function(obj){ return +obj.key; }));
       buildLegend(data)
         
@@ -150,6 +178,7 @@ jQuery(document).ready(function () {
       .append('h3')
         .text(function (d) {return d.name;})
       .append('select')
+        .data(data)
         .on('change',changeField)
         .selectAll('option')
           .data(function (d) {return d.fields||[];})          

@@ -8,24 +8,23 @@ var express = require("express"),
 
 //LOAD THE DATA
 
-var health_data={},
-    datasets=[];
+var datasets=[];
 
+var build_data = function(file_name){
 
-//FIPS,Population,Deaths,% Fair/Poor,% LBW,% Smokers,% Obese,"STD Rates per 100,000",Teen Birth Rate,Mammography Rate,% Unemployed,% Children in Poverty,Violent Crime Rate,Ozone Days,% Limited Access Food,% Fast Foods
+  console.log('Loadindg ... static/data/' + file_name + '.csv')
 
-var build_data = function(input_file){
-  
   var this_set = {};
-  this_set.name = input_file
   
-  fs.readFile(input_file, 'utf8', function (err, data) {
+  this_set.name = file_name
+  
+  fs.readFile('static/data/' + file_name + '.csv', 'utf8', function (err, data) {
+      
+    this_set.data = d3.csv.parse(data);
     
-  health_data = d3.csv.parse(data);
-  
-  this_set.fields = _.keys(health_data[0]);
-  
-  datasets.push(this_set);
+    this_set.fields = _.keys(this_set.data[0]);
+
+    datasets.push(this_set);
   
   });   
 
@@ -46,19 +45,31 @@ var run_server = function(){
   });
 
   app.get('/json/datasets', function(request, response) {
-                    
-    response.json(datasets)
+    var response_array =[];
+                  
+    _.each(datasets,function (value, key, list) {
+      var obj={}
+      obj.name = value.name;
+      obj.fields = value.fields;
+      response_array.push(obj)
+    })                
+    response.json(response_array)
 
   });
 
 
   app.get('/json', function(request, response) {
 
-    var key = request.query.key || 'FIPS'
+    var key = request.query.key || 'FIPS',
+        name = request.query.name || "";
 
+        requested_set = _.find(datasets,function (dataset) {
+          return dataset.name === name;
+        })  || {};
+        
     var reponse_data = d3.nest()
         .key(function(d) { return d[key]; }) 
-        .entries(health_data);  
+        .entries(requested_set.data);  
                     
     response.json(_.sortBy(reponse_data,function (obj) {
       return +obj.key;
@@ -84,7 +95,13 @@ var run_server = function(){
 
 async.chain()
   .first(
-    build_data('static/data/2013 County Health Ranking Oklahoma Data - v1_0.csv')
+    build_data('2013 County Health Ranking Oklahoma Data - v1_0')
+  )
+  .then( 
+    build_data('Oklahoma Medicare Reimbursements 2010')
+  )
+  .then(
+    build_data('2010 Medicare Outcomes Data Oklahoma')  
   )
   .then(
     run_server()
