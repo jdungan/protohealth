@@ -10,7 +10,7 @@ var express = require("express"),
 
 var datasets=[];
 
-var build_data = function(file_name){
+var load_data = function(file_name){
 
   console.log('Loadindg ... static/data/' + file_name + '.csv')
 
@@ -60,12 +60,12 @@ var run_server = function(){
 
   app.get('/json', function(request, response) {
 
-    var key = request.query.key || 'FIPS',
+    var key  = request.query.key || 'FIPS',
         name = request.query.name || "";
 
-        requested_set = _.find(datasets,function (dataset) {
-          return dataset.name === name;
-        })  || {};
+    requested_set = _.find(datasets,function (dataset) {
+      return dataset.name === name;
+    })  || {};
         
     var reponse_data = d3.nest()
         .key(function(d) { return d[key]; }) 
@@ -78,13 +78,10 @@ var run_server = function(){
   });
 
   app.get('/', function(request, response) {
-
       response.sendfile('index.html')
-
   });
 
   var port = process.env.PORT || 1984;
-
 
   app.listen(port, function() {
     console.log("Listening on " + port);
@@ -95,13 +92,13 @@ var run_server = function(){
 
 async.chain()
   .first(
-    build_data('2013 County Health Ranking Oklahoma Data - v1_0')
+    load_data('2013 County Health Ranking Oklahoma Data - v1_0')
   )
   .then( 
-    build_data('Oklahoma Medicare Reimbursements 2010')
+    load_data('Oklahoma Medicare Reimbursements 2010')
   )
   .then(
-    build_data('2010 Medicare Outcomes Data Oklahoma')  
+    load_data('2010 Medicare Outcomes Data Oklahoma')  
   )
   .then(
     run_server()

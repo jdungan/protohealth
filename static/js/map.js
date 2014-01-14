@@ -9,6 +9,29 @@ jQuery(document).ready(function () {
     legend,
     counties, 
     legend_element;
+    
+    
+    function appendTable(obj,target){
+      var new_table = target.append('table');
+      
+      _.keys(obj).forEach(function (key) {
+        new_table.insert('tr')
+          .append('td')
+          .text(key)
+          .append('td')
+          .text(obj[key])
+      })
+    }
+
+    function show_county_details(){
+      
+      this_county = d3.select(this).datum().properties
+      details = d3.select('.county_detail')
+      details.text('')
+      appendTable(this_county,details)
+    
+    };
+
 
     SGH = new healthdata()
     
@@ -44,9 +67,9 @@ jQuery(document).ready(function () {
 
             counties = g.selectAll("path")
                 .data(collection.features)
-                .on('mouseover',show_county_details)
                 .enter()
                 .append("path")
+                .on('mouseenter', show_county_details)
                 .attr('class', 'county')
                 .attr('id', function(d) {return 'F' + d.properties.FIPS;});
                 
@@ -88,19 +111,7 @@ jQuery(document).ready(function () {
       },
   });
   
-  map.addControl(new countyControl());
-
- 
- 
-  function show_county_details(){
-    
-    details = d3.select('#county_details')
-    details.text('')
-    details
-      .text(this.datum())
-    
-  };
-  
+  map.addControl(new countyControl());  
   
 //build axis
   function buildLegend(data){
@@ -120,36 +131,42 @@ jQuery(document).ready(function () {
         .append("g")
             .attr("class", "key")
             .attr("transform", "translate(50,5)");
+            
+    if (!thisf.colors) {
+      thisf.colors  = l.selectAll("rect")
+        .data(function () {return quantize.range(); })
+          
+      thisf.colors.exit().remove();
     
+      thisf.colors.enter().append("rect")
+    
+      color_width = x.range()[1]/quantize.range().length
+    
+      thisf.colors
+        .attr("height", 20)
+        .attr("x", function(d,i) { return i*color_width; })
+        .attr('width',function (d,i) {return color_width})
+        .attr('y',function () {return 0})
+        .attr("class", function(d,i) { return 'q'+i; })
+      
+    } 
+
+
     x
       .domain(quantize.domain())
       .ticks(quantize.range().length)
     
     xAxis.scale(x)
-    l.call(xAxis)
-            
-    colors  = l.selectAll("rect")
-      .data(function () {return quantize.range(); })
-          
-    colors.exit().remove();
     
-    colors.enter().append("rect")
-    
-    color_width = x.range()[1]/quantize.range().length
-    
-    colors
-      .attr("height", 20)
-      .attr("x", function(d,i) { return i*color_width; })
-      .attr('width',function (d,i) {return color_width})
-      .attr('y',function () {return 0})
-      .attr("class", function(d,i) { return 'q'+i; })
-
+    l.transition()
+      .duration(750)
+      .call(xAxis)
 
   }
   
   function changeField() {
     var fName = this.options[this.selectedIndex].value,
-        dsName = d3.select(this.parentNode).datum().name;
+        dsName = d3.select(this).datum().name;
     
     SGH.json({key:fName,name:dsName}).done(function (data) {
       
@@ -160,9 +177,7 @@ jQuery(document).ready(function () {
         _.each(obj.values,function (county) {
           key_value = +county[fName];
           d3.select('#F'+county.FIPS)
-            .attr("class", function(d) { 
-              return 'county '+ quantize( key_value); })
-          
+            .attr("class", function(d) { return 'county '+ quantize( key_value); })
         })
       })
     });
@@ -178,7 +193,6 @@ jQuery(document).ready(function () {
       .append('h3')
         .text(function (d) {return d.name;})
       .append('select')
-        .data(data)
         .on('change',changeField)
         .selectAll('option')
           .data(function (d) {return d.fields||[];})          

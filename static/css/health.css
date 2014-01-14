@@ -1,7 +1,13 @@
 div.legend{
   color:black;
   background:white;
-  opacity:1;  
+  opacity:.75;  
+}
+
+div.county_detail{
+  color:black;
+  background:white;
+  opacity:.75;  
 }
 
 
@@ -21,6 +27,10 @@ path.q5 { fill:#4eb3d3; }
 path.q6 { fill:#2b8cbe; }
 path.q7 { fill:#0868ac; }
 path.q8 { fill:#084081; }
+
+rect.county {
+    fill-opacity:0.5;
+}
 
 rect.q0 { fill:#f7fcf0 }
 rect.q1 { fill:#e0f3db }
